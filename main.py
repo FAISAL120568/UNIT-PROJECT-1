@@ -1,3 +1,4 @@
+import hashlib
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -15,13 +16,20 @@ SENDER_EMAIL = "faisalfawaz101@gmail.com"
 APP_PASSWORD = "abcb djbp mldu gpgp"
 RECEIVER_EMAIL = "faisalfawaz101@gmail.com"
 
+
 USERS = {
-    "admin": {"password": "123", "role": "Admin"},
-    "analyst": {"password": "456", "role": "Analyst"}
+    "admin": {
+        "password_hash": hashlib.sha256("123".encode()).hexdigest(), 
+        "role": "Admin"
+    },
+    "analyst": {
+        "password_hash": hashlib.sha256("456".encode()).hexdigest(), 
+        "role": "Analyst"
+    }
 }
 
 def display_banner():
-    
+
     banner_text = r"""
   _____ _____   ____    _____ ____  _  _   ____  _     _____ 
  /  __//  __/  /  _ \  /  __//  _ \/ \/ \ /  __/ \   /  __/ 
@@ -41,7 +49,10 @@ def login():
     username = input("Enter username (admin / analyst): ").strip().lower()
     password = input("Enter password: ").strip()
 
-    if username in USERS and USERS[username]["password"] == password:
+
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+    if username in USERS and USERS[username]["password_hash"] == hashed_password:
         role = USERS[username]["role"]
         console.print(Panel(f"[bold green]✔ Login successful! Welcome, {username.capitalize()} ({role})[/bold green]", border_style="green"))
         return role
@@ -100,7 +111,7 @@ def send_email_alert(case_title, severity):
         server.login(SENDER_EMAIL, APP_PASSWORD)
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
         server.quit()
-        console.print("[bold green]📧 Security Email alert sent successfully to Gmail![/bold green]")
+        console.print("[bold green]📧 Email alert sent successfully to Gmail![/bold green]")
     except Exception as e:
         console.print(f"[bold red]❌ Failed to send email alert: {e}[/bold red]")
 
@@ -128,7 +139,6 @@ def display_cases(cases):
 
     for case in cases:
         sev = str(case.get("severity", "")).strip().capitalize()
-
         if sev.lower() == "high":
             sev_styled = f"[bold red]🔴 {sev}[/bold red]"
         elif sev.lower() == "medium":
