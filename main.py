@@ -3,6 +3,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from rich.console import Console
 from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
 from faker import Faker
 from services.storage import load_cases, save_cases
 
@@ -13,11 +15,26 @@ SENDER_EMAIL = "faisalfawaz101@gmail.com"
 APP_PASSWORD = "abcb djbp mldu gpgp"
 RECEIVER_EMAIL = "faisalfawaz101@gmail.com"
 
-
 USERS = {
     "admin": {"password": "123", "role": "Admin"},
     "analyst": {"password": "456", "role": "Analyst"}
 }
+
+def display_banner():
+    
+    banner_text = r"""
+  _____ _____   ____    _____ ____  _  _   ____  _     _____ 
+ /  __//  __/  /  _ \  /  __//  _ \/ \/ \ /  __/ \   /  __/ 
+ |  \  |  \    | / \|  |  \  | / \|| || | |  \ | |   |  \   
+ |  /_ |  /_   | \_/|  |  /_ | \_/|| || | |  /_| |_/\|  /_  
+ \____\\____\  \____/  \____\\____/\_/\_/ \____/\____/\____\ 
+    """
+    console.print(f"[bold red]{banner_text}[/bold red]")
+    console.print(Panel.fit(
+        "[bold white]🛡️ CYBERCRIME SOC MANAGEMENT CONSOLE v2.0 🛡️[/bold white]\n"
+        "[dim]Enterprise Security Automation & Incident Response Framework[/dim]",
+        border_style="cyan"
+    ))
 
 def login():
     console.print("\n[bold cyan]=== SOC CONSOLE LOGIN ===[/bold cyan]")
@@ -26,10 +43,10 @@ def login():
 
     if username in USERS and USERS[username]["password"] == password:
         role = USERS[username]["role"]
-        console.print(f"[bold green]Login successful! Welcome, {username.capitalize()} ({role})[/bold green]")
+        console.print(Panel(f"[bold green]✔ Login successful! Welcome, {username.capitalize()} ({role})[/bold green]", border_style="green"))
         return role
     else:
-        console.print("[bold red]Invalid username or password. Access Denied.[/bold red]")
+        console.print(Panel("[bold red]❌ Access Denied: Invalid username or password.[/bold red]", border_style="red"))
         return None
 
 def send_email_alert(case_title, severity):
@@ -83,7 +100,7 @@ def send_email_alert(case_title, severity):
         server.login(SENDER_EMAIL, APP_PASSWORD)
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
         server.quit()
-        console.print("[bold green]📧 HTML Email alert sent successfully to Gmail![/bold green]")
+        console.print("[bold green]📧 Security Email alert sent successfully to Gmail![/bold green]")
     except Exception as e:
         console.print(f"[bold red]❌ Failed to send email alert: {e}[/bold red]")
 
@@ -103,42 +120,63 @@ def display_cases(cases):
         console.print("[yellow]No cases found.[/yellow]")
         return
     
-    table = Table(title="Cybercrime Cases")
-    table.add_column("ID", style="cyan")
-    table.add_column("Title", style="magenta")
-    table.add_column("Severity", style="green")
-    table.add_column("Status", style="yellow")
+    table = Table(title="Cybercrime Cases Registry", show_header=True, header_style="bold magenta")
+    table.add_column("ID", style="cyan", justify="center")
+    table.add_column("Title", style="bold white")
+    table.add_column("Severity", justify="center")
+    table.add_column("Status", justify="center")
 
     for case in cases:
+        sev = str(case.get("severity", "")).strip().capitalize()
+
+        if sev.lower() == "high":
+            sev_styled = f"[bold red]🔴 {sev}[/bold red]"
+        elif sev.lower() == "medium":
+            sev_styled = f"[bold yellow]🟡 {sev}[/bold yellow]"
+        else:
+            sev_styled = f"[bold green]🟢 {sev}[/bold green]"
+
+        status = case.get("status", "Open")
+        status_styled = f"[blue]{status}[/blue]" if status.lower() == "open" else f"[green]{status}[/green]"
+
         table.add_row(
             str(case.get("id")),
             case.get("title"),
-            case.get("severity"),
-            case.get("status", "Open")
+            sev_styled,
+            status_styled
         )
 
     console.print(table)
 
 def show_dashboard(cases):
     total = len(cases)
-    high = sum(1 for c in cases if c.get("severity", "").strip().lower() == "high")
-    medium = sum(1 for c in cases if c.get("severity", "").strip().lower() == "medium")
-    low = sum(1 for c in cases if c.get("severity", "").strip().lower() == "low")
-    open_cases = sum(1 for c in cases if c.get("status", "Open").lower() == "open")
-    closed_cases = sum(1 for c in cases if c.get("status", "").lower() == "closed")
+    high = sum(1 for c in cases if str(c.get("severity", "")).strip().lower() == "high")
+    medium = sum(1 for c in cases if str(c.get("severity", "")).strip().lower() == "medium")
+    low = sum(1 for c in cases if str(c.get("severity", "")).strip().lower() == "low")
+    open_cases = sum(1 for c in cases if str(c.get("status", "Open")).lower() == "open")
+    closed_cases = sum(1 for c in cases if str(c.get("status", "")).lower() == "closed")
 
-    console.print("\n[bold magenta]📊 SOC ANALYTICS & DASHBOARD 📊[/bold magenta]")
-    console.print(f"Total Incidents Recorded: [bold cyan]{total}[/bold cyan]")
-    console.print(f"🔴 High Severity: [bold red]{high}[/bold red]")
-    console.print(f"🟡 Medium Severity: [bold yellow]{medium}[/bold yellow]")
-    console.print(f"🟢 Low Severity: [bold green]{low}[/bold green]")
-    console.print(f"📂 Open Cases: [bold blue]{open_cases}[/bold blue]")
-    console.print(f"🔒 Closed Cases: [bold white]{closed_cases}[/bold white]")
+    stats_summary = f"""
+[bold cyan]Total Incidents Recorded:[/bold cyan] {total}
+-----------------------------
+🔴 [bold red]High Severity:[/bold red] {high}
+🟡 [bold yellow]Medium Severity:[/bold yellow] {medium}
+🟢 [bold green]Low Severity:[/bold green] {low}
+-----------------------------
+📂 [bold blue]Open Cases:[/bold blue] {open_cases}
+🔒 [bold white]Closed Cases:[/bold white] {closed_cases}
+    """
+    console.print(Panel(stats_summary, title="📊 SOC ANALYTICS & METRICS 📊", border_style="magenta"))
 
 def add_case(cases):
     case_id = len(cases) + 1
-    title = input("Enter case title: ")
-    severity = input("Enter severity (Low/Medium/High): ")
+    title = input("Enter case title: ").strip()
+    
+    while True:
+        severity = input("Enter severity (Low/Medium/High): ").strip().capitalize()
+        if severity in ["Low", "Medium", "High"]:
+            break
+        console.print("[red]Invalid severity! Please enter Low, Medium, or High.[/red]")
 
     new_case = {
         "id": case_id,
@@ -149,7 +187,7 @@ def add_case(cases):
 
     cases.append(new_case)
     if save_cases(cases):
-        console.print("[bold green]Case added successfully![/bold green]")
+        console.print(Panel("[bold green]✔ Case added successfully![/bold green]", border_style="green"))
         send_email_alert(title, severity)
     else:
         console.print("[bold red]Failed to save case.[/bold red]")
@@ -159,7 +197,7 @@ def search_case(cases):
         console.print("[yellow]No cases available to search.[/yellow]")
         return
     
-    query = input("Enter Case ID or Keyword to search: ").lower()
+    query = input("Enter Case ID or Keyword to search: ").strip().lower()
     results = [
         c for c in cases 
         if str(c.get("id")) == query or query in c.get("title", "").lower()
@@ -184,30 +222,25 @@ def update_case_status(cases):
     for case in cases:
         if case.get("id") == case_id:
             console.print(f"Current Status: [bold yellow]{case.get('status', 'Open')}[/bold yellow]")
-            
-            # قائمة الحالات المعتمدة
             valid_statuses = ["open", "under investigation", "closed"]
             
             while True:
                 new_status = input("Enter new status (Open / Under Investigation / Closed): ").strip()
-                
-            
                 if new_status.lower() in valid_statuses:
-                    
                     case["status"] = new_status.title()
                     if save_cases(cases):
-                        console.print("[bold green]Case status updated successfully![/bold green]")
+                        console.print(Panel("[bold green]✔ Case status updated successfully![/bold green]", border_style="green"))
                     else:
                         console.print("[bold red]Failed to save updated status.[/bold red]")
                     return
                 else:
-                    console.print("[bold red]❌ Invalid status! Please choose only from: Open, Under Investigation, Closed[/bold red]")
+                    console.print("[bold red]❌ Invalid status! Choose from: Open, Under Investigation, Closed[/bold red]")
 
     console.print("[red]Case ID not found.[/red]")
 
 def delete_case(cases, role):
     if role != "Admin":
-        console.print("[bold red]Permission Denied: Only 'Admin' can delete cases.[/bold red]")
+        console.print(Panel("[bold red]⛔ Permission Denied: Only 'Admin' can delete cases.[/bold red]", border_style="red"))
         return
 
     if not cases:
@@ -224,7 +257,7 @@ def delete_case(cases, role):
         if case.get("id") == case_id:
             cases.pop(i)
             if save_cases(cases):
-                console.print(f"[bold green]Case ID {case_id} deleted successfully![/bold green]")
+                console.print(Panel(f"[bold green]✔ Case ID {case_id} deleted successfully![/bold green]", border_style="green"))
             else:
                 console.print("[bold red]Failed to update storage after deletion.[/bold red]")
             return
@@ -233,7 +266,7 @@ def delete_case(cases, role):
 
 def generate_fake_cases(cases, role):
     if role != "Admin":
-        console.print("[bold red]Permission Denied: Only 'Admin' can generate fake cases.[/bold red]")
+        console.print(Panel("[bold red]⛔ Permission Denied: Only 'Admin' can generate fake cases.[/bold red]", border_style="red"))
         return
 
     severities = ["Low", "Medium", "High"]
@@ -257,16 +290,16 @@ def generate_fake_cases(cases, role):
             "status": fake.random_element(statuses)
         }
         cases.append(new_case)
-        send_email_alt = send_email_alert(title, sev)
+        send_email_alert(title, sev)
     
     if save_cases(cases):
-        console.print(f"[bold green]{count} fake cases generated successfully![/bold green]")
+        console.print(Panel(f"[bold green]✔ {count} fake cases generated successfully![/bold green]", border_style="green"))
     else:
         console.print("[bold red]Failed to save fake cases.[/bold red]")
 
 def main():
+    display_banner()
     cases = load_cases()
-
     
     role = None
     while not role:
