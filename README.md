@@ -19,6 +19,16 @@ UNIT-PROJECT-1/
 └── services/                  # Core application logic package
     ├── __init__.py            # Package initialization marker
     └── storage.py             # Data handling, RBAC, password hashing & alert logic
+
+🔑 Default Credentials (RBAC Testing)For evaluation and testing purposes, use the following pre-configured account credentials:
+Role                        Username          PasswordSOC
+
+SOCAdministratoradmin       admin              123
+
+  Security Analystanalyst   analyst            456
+
+
+
 🛠️ Features & User Stories
 As a Security Analyst or SOC Administrator, I can:
 Authentication & Access Control: Securely authenticate using SHA-256 hashed password verification and role enforcement (Admin vs. Analyst).
