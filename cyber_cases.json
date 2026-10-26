@@ -122,5 +122,23 @@
         "title": "asssss",
         "severity": "High",
         "status": "Open"
+    },
+    {
+        "id": 22,
+        "title": "Data Breach",
+        "severity": "Low",
+        "status": "Open"
+    },
+    {
+        "id": 23,
+        "title": "Data Breach",
+        "severity": "Low",
+        "status": "Under Investigation"
+    },
+    {
+        "id": 24,
+        "title": "ffffffffffff",
+        "severity": "High",
+        "status": "Under Investigation"
     }
 ]
